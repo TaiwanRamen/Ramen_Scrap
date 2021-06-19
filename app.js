@@ -21,6 +21,7 @@ app.get('/scrap', async (req, res) => {
             throw new Error('not accepted IP')
         }
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             message: error
         })
