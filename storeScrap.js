@@ -2,7 +2,7 @@ const Store = require('./models/store');
 const geohash = require('ngeohash');
 const request_client = require('request-promise-native');
 
-module.exports = async (page, storeLink, regionName) => {
+module.exports = async (browser, page, storeLink, regionName) => {
     //去商店的連結
     await storeLink.click()
     await page.waitForTimeout(process.env.DELAY_TIME)
@@ -22,7 +22,7 @@ module.exports = async (page, storeLink, regionName) => {
             phoneNumber: "",
             openPeriod: null,
             openPeriodText: null,
-            googleImages: null,
+            googleImages: [],
             googleUrl: null,
             storeUrl: null
         }
@@ -84,8 +84,22 @@ module.exports = async (page, storeLink, regionName) => {
             if (storeUrlTags.length !== 0 && store.googleUrl === null) {
                 store.googleUrl = await page.evaluate(element => element.getAttribute('href'), storeUrlTags[storeUrlTags.length - 1]); //*************google網站*************
             }
-        }
 
+            console.log(store.googleUrl)
+            let page1 = await browser.newPage();
+            await page1.goto(store.googleUrl);
+            await page1.waitForXPath('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
+            let photoBtn = await page1.$x('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
+            await photoBtn[0].click();
+            await page1.waitForSelector('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
+            let photoLinks = await page1.$$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
+            for (let i = 0; i < 5; i++) {
+                let googleLink = await page1.evaluate(element => element.getAttribute('style'), photoLinks[i]); //*************google照片*************
+                store.googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
+            }
+            await page1.close()
+            await page.waitForTimeout(800);
+        }
 
         let url = page.url()
         let location = url.match(/\=\d*\.\d*\%2C\d*\.\d*/)
