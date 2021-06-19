@@ -55,7 +55,7 @@ const go = async (proxy) => {
         },
     }
 
-    const browser = await puppeteer.launch(normal)
+    const browser = await puppeteer.launch(headless)
 
     try {
 //==========================================================================================
@@ -114,7 +114,7 @@ const go = async (proxy) => {
         console.log('error in fb_scrap.js')
         console.log(error)
     } finally {
-        //await browser.close();
+        await browser.close();
     }
 }
 

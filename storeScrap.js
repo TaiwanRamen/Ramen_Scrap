@@ -85,7 +85,8 @@ module.exports = async (browser, page, storeLink, regionName) => {
                 store.googleUrl = await page.evaluate(element => element.getAttribute('href'), storeUrlTags[storeUrlTags.length - 1]); //*************google網站*************
             }
 
-            console.log(store.googleUrl)
+            // open new page to scrap images
+            //console.log(store.googleUrl)
             let page1 = await browser.newPage();
             await page1.goto(store.googleUrl);
             await page1.waitForXPath('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
@@ -98,7 +99,7 @@ module.exports = async (browser, page, storeLink, regionName) => {
                 store.googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
             }
             await page1.close()
-            await page.waitForTimeout(800);
+            await page.waitForTimeout(1000);
         }
 
         let url = page.url()
@@ -156,7 +157,7 @@ module.exports = async (browser, page, storeLink, regionName) => {
             console.log('more than one store found, skip')
         }
         console.log("back!")
-//上一頁
+        //上一頁
         await page.waitForSelector('#featurecardPanel > div > div >div:nth-child(3) > div:nth-child(1) > div:nth-child(1)');
         let backBtn = await page.$('#featurecardPanel > div > div >div:nth-child(3) > div:nth-child(1) > div:nth-child(1)');
         await backBtn.click();
