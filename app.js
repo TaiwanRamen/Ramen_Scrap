@@ -45,7 +45,21 @@ app.get('/scrap', async (req, res) => {
         })
     }
 });
+app.get('/serverIp', async (req, res) => {
 
+    try {
+        const serverIpRes = await axios.get('https://ipv4bot.whatismyipaddress.com/');
+        res.status(200).json({
+            serverIp: serverIpRes.data,
+            message: "success"
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: error
+        })
+    }
+})
 
 app.get('/:else', (req, res) => {
     res.send("No such pass exist.");
