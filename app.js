@@ -9,17 +9,28 @@ const app = express();
 
 app.get('/scrap', async (req, res) => {
     try {
-        let trustedIps = process.env.TRUSTED_IP.split(',');
         const requestIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-        if (trustedIps.indexOf(requestIP) >= 0) {
+        if (process.env.TRUSTED_IPS !== undefined) {
+            let trustedIps = process.env.TRUSTED_IPS.split(',');
+            if (trustedIps.indexOf(requestIP) >= 0) {
+                console.log("start scarp with accepted ip")
+                await googleScrap()
+                return res.status(200).json({
+                    requestIP: requestIP,
+                    message: "success"
+                })
+            } else {
+                throw new Error('not accepted IP')
+            }
+        }else {
+            console.log("start scarp without accepted ip")
             await googleScrap()
             return res.status(200).json({
                 requestIP: requestIP,
                 message: "success"
             })
-        } else {
-            throw new Error('not accepted IP')
         }
+
     } catch (error) {
         console.log(error)
         res.status(500).json({
