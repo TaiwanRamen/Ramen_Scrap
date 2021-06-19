@@ -1,5 +1,6 @@
 const axios = require("axios"),
     jsdom = require('jsdom');
+
 module.exports = async () => {
     const options = {
         method: 'GET',
@@ -13,4 +14,5 @@ module.exports = async () => {
         const proxysText = element.innerHTML;
         return proxysText.match(/\b((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:(?<!\.)\b|\.)){4}\:\d{2,5}/g)
     }
+    return []
 }

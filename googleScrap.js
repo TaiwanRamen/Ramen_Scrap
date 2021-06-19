@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer');
 const mongoose = require('mongoose');
 const storeScrap = require('./storeScrap');
 
-const go = async (proxys) => {
+const go = async (proxy) => {
     try {
         await mongoose.connect(process.env.DATABASE_URL_RS, {
             useNewUrlParser: true,
@@ -30,8 +30,8 @@ const go = async (proxys) => {
         '--ignore-certificate-errors'
     ];
 
-    if (proxys && proxys[0]) {
-        args.push(`--proxy-server=${proxys[0]}`)
+    if (proxy) {
+        args.push(`--proxy-server=${proxy}`)
     }
 
     const headless = {
@@ -86,11 +86,6 @@ const go = async (proxys) => {
         }
         const regions = await page.$$('#legendPanel > div > div > div > div > div > div > div > div > div.HzV7m-pbTTYe-r4nke');
 
-        // let regionName = await page.evaluate(element => element.innerText, regions[0]); //*************地區*************
-        // const stores = await page.$$(`#legendPanel > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(1) > div >div:nth-child(3) > div.pbTTYe-ibnC6b-d6wfac`);
-        //
-        // await storeScrap(page, stores[0], regionName)
-
         for (let i = 0; i < regions.length - 1; i++) {
             let regionName = await page.evaluate(element => element.innerText, regions[i]); //*************地區*************
             const stores = await page.$$(`#legendPanel > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(${i + 1}) > div >div:nth-child(3) > div.pbTTYe-ibnC6b-d6wfac`);
@@ -114,7 +109,7 @@ const go = async (proxys) => {
         console.log('error in fb_scrap.js')
         console.log(error)
     } finally {
-        await browser.close();
+        //await browser.close();
     }
 }
 module.exports = go;

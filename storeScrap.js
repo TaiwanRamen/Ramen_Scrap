@@ -1,5 +1,6 @@
 const Store = require('./models/store');
 const geohash = require('ngeohash');
+const request_client = require('request-promise-native');
 
 module.exports = async (page, storeLink, regionName) => {
     //去商店的連結
@@ -26,28 +27,36 @@ module.exports = async (page, storeLink, regionName) => {
             storeUrl: null
         }
 
-        try {
-            let response = await page.waitForResponse(response =>
-                    response.url().startsWith("https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails"),
-                {timeout: 1000});
-            let resText = await response.text();
-            resText = resText.slice(36, -1)
-            storeInfo = await JSON.parse(resText).result;
-            store.address = storeInfo.formatted_address;
-            store.phoneNumber = storeInfo.formatted_phone_number;
-            store.openPeriod = storeInfo.opening_hours?.periods;
-            store.openPeriodText = storeInfo.opening_hours?.weekday_text;
-            store.googleImages = storeInfo.photos?.map(photo => {
-                let photoUrl = photo.raw_reference?.fife_url;
-                return photoUrl?.slice(0, -2)
-            })
-            store.googleUrl = storeInfo?.url;
-            store.storeUrl = storeInfo?.website;
-            store.googlePlaceId = storeInfo?.place_id;
-        } catch (e) {
+        await page.setRequestInterception(true);
 
-        }
+        await page.on('request', async (request) => {
+            try {
+                const response = await request_client({
+                    uri: request.url(),
+                    resolveWithFullResponse: true,
+                })
+                const request_url = request.url();
+                if (request_url.startsWith('https://maps.googleapis.com/maps/api/place/js/PlaceService.GetPlaceDetails')) {
+                    let response_body = response.body;
+                    response_body = response_body.slice(36, -1)
+                    let storeInfo = await JSON.parse(response_body).result;
+                    store.address = storeInfo.formatted_address;
+                    store.phoneNumber = storeInfo.formatted_phone_number;
+                    store.openPeriod = storeInfo.opening_hours?.periods;
+                    store.openPeriodText = storeInfo.opening_hours?.weekday_text;
+                    store.googleImages = storeInfo.photos?.map(photo => {
+                        let photoUrl = photo.raw_reference?.fife_url;
+                        return photoUrl?.slice(0, -2)
+                    })
+                    store.googleUrl = storeInfo?.url;
+                    store.storeUrl = storeInfo?.website;
+                    store.googlePlaceId = storeInfo?.place_id;
+                }
 
+            } catch (e) {
+                console.error(e);
+            }
+        })
         store.name = await page.evaluate(element => element.innerText, storeLink); //*************店名*************
 
         await page.waitForTimeout(process.env.DELAY_TIME);
@@ -102,9 +111,9 @@ module.exports = async (page, storeLink, regionName) => {
         }
 
         console.log(store)
-        //=========================================================
-        //    存入DB
-        //=========================================================
+//=========================================================
+//    存入DB
+//=========================================================
 
         let foundStore = await Store.find({
             $or: [
@@ -133,7 +142,7 @@ module.exports = async (page, storeLink, regionName) => {
             console.log('more than one store found, skip')
         }
         console.log("back!")
-        //上一頁
+//上一頁
         await page.waitForSelector('#featurecardPanel > div > div >div:nth-child(3) > div:nth-child(1) > div:nth-child(1)');
         let backBtn = await page.$('#featurecardPanel > div > div >div:nth-child(3) > div:nth-child(1) > div:nth-child(1)');
         await backBtn.click();
