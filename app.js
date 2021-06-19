@@ -14,7 +14,7 @@ app.get('/scrap', async (req, res) => {
             let trustedIps = process.env.TRUSTED_IPS.split(',');
             if (trustedIps.indexOf(requestIP) >= 0) {
                 console.log("start scarp with accepted ip")
-                await googleScrap()
+                googleScrap()
                 return res.status(200).json({
                     requestIP: requestIP,
                     message: "success"
@@ -24,13 +24,12 @@ app.get('/scrap', async (req, res) => {
             }
         }else {
             console.log("start scarp without accepted ip")
-            await googleScrap()
+            googleScrap()
             return res.status(200).json({
                 requestIP: requestIP,
                 message: "success"
             })
         }
-
     } catch (error) {
         console.log(error)
         res.status(500).json({
@@ -38,7 +37,6 @@ app.get('/scrap', async (req, res) => {
         })
     }
 });
-
 
 app.get('/:else', (req, res) => {
     res.send("No such pass exist.");
