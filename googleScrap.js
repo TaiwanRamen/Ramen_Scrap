@@ -3,7 +3,6 @@ const puppeteer = require('puppeteer');
 const mongoose = require('mongoose');
 const storeScrap = require('./storeScrap');
 
-
 const go = async (proxys) => {
     try {
         await mongoose.connect(process.env.DATABASE_URL_RS, {
