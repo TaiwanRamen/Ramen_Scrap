@@ -1,0 +1,11 @@
+node_modules/
+src/safe-zone/
+SSL/
+data/
+databases/
+src/logs/
+.env
+tmp/
+userData
+volumes/
+logs/
