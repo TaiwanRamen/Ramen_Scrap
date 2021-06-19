@@ -86,15 +86,20 @@ const go = async (proxys) => {
         }
         const regions = await page.$$('#legendPanel > div > div > div > div > div > div > div > div > div.HzV7m-pbTTYe-r4nke');
 
-        for (let i = 0; i < regions.length - 1; i++) {
-            let regionName = await page.evaluate(element => element.innerText, regions[i]); //*************地區*************
-            const stores = await page.$$(`#legendPanel > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(${i + 1}) > div >div:nth-child(3) > div.pbTTYe-ibnC6b-d6wfac`);
+        let regionName = await page.evaluate(element => element.innerText, regions[0]); //*************地區*************
+        const stores = await page.$$(`#legendPanel > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(1) > div >div:nth-child(3) > div.pbTTYe-ibnC6b-d6wfac`);
 
-            for (let j = 0; j < stores.length - 1; j++) {
-                console.log(`${regionName}區域第${j}間店`)
-                await storeScrap(page, stores[j], regionName);
-            }
-        }
+        await storeScrap(page, stores[0], regionName)
+
+        // for (let i = 0; i < regions.length - 1; i++) {
+        //     let regionName = await page.evaluate(element => element.innerText, regions[i]); //*************地區*************
+        //     const stores = await page.$$(`#legendPanel > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(${i + 1}) > div >div:nth-child(3) > div.pbTTYe-ibnC6b-d6wfac`);
+        //
+        //     for (let j = 0; j < stores.length - 1; j++) {
+        //         console.log(`${regionName}區域第${j}間店`)
+        //         await storeScrap(page, stores[j], regionName);
+        //     }
+        // }
 //==========================================================================================
 //check for run time end
 //==========================================================================================
