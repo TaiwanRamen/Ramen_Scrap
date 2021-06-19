@@ -35,4 +35,4 @@ app.get('/:else', (req, res) => {
 //handle http server and socket io
 const PORT = process.env.PORT;
 
-const server = app.listen(PORT, console.log(`Server started on port ${PORT}`));
+app.listen(PORT, console.log(`Server started on port ${PORT}`));
