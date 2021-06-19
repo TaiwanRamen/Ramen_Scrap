@@ -4,14 +4,19 @@ if (!isProduction) {
 }
 const express = require('express'),
     googleScrap = require('./googleScrap'),
-    getProxy = require('./getProxys');
+    getProxy = require('./getProxys'),
+    axios = require("axios");
 
-const app = express();
+const
+app = express();
 
 app.get('/scrap', async (req, res) => {
 
     try {
+        const serverIpRes = await axios.get('https://ipv4bot.whatismyipaddress.com/')
+
         const requestIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
         if (process.env.TRUSTED_IPS !== undefined) {
             let trustedIps = process.env.TRUSTED_IPS.split(',');
             if (trustedIps.indexOf(requestIP) >= 0) {
@@ -28,6 +33,7 @@ app.get('/scrap', async (req, res) => {
             console.log("start scarp without accepted ip")
             googleScrap();
             res.status(200).json({
+                serverIp: serverIpRes.data,
                 requestIP: requestIP,
                 message: "success"
             })
