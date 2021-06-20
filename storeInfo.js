@@ -51,7 +51,7 @@ const scrap = async (store) => {
             height
         },
     }
-    const browser = await puppeteer.launch(normal);
+    const browser = await puppeteer.launch(headless);
     const context = browser.defaultBrowserContext();
     await context.overridePermissions("https://www.google.com/maps", ["geolocation", "notifications"]);
     let page = await browser.newPage();
@@ -155,9 +155,11 @@ module.exports = async () => {
         for (let i = 0; i < allStores.length; i++) {
             await scrap(allStores[i])
             fs.appendFileSync('done.json', `{
-                storeId: ${allStores[i]._id},
-                number: ${i}
-            },`)
+                'storeId': '${allStores[i]._id}',
+                'number': ${i}
+            },
+            `)
+
         }
     } catch (err) {
         console.log(err)
