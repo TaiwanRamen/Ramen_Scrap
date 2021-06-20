@@ -1,10 +1,14 @@
 const Store = require('./models/store');
 const geohash = require('ngeohash');
 const request_client = require('request-promise-native');
+const {createCursor} = require("ghost-cursor");
 
-module.exports = async (browser, page, storeLink, regionName) => {
+module.exports = async (browser, page, cursor, storeLink, regionName) => {
     //去商店的連結
-    await storeLink.click()
+    await page.waitForTimeout(process.env.DELAY_TIME)
+
+    await cursor.click(storeLink)
+
     await page.waitForTimeout(process.env.DELAY_TIME)
     try {
         let storeInfo = null;
@@ -82,24 +86,33 @@ module.exports = async (browser, page, storeLink, regionName) => {
                 }
             }
             if (storeUrlTags.length !== 0 && store.googleUrl === null) {
-                store.googleUrl = await page.evaluate(element => element.getAttribute('href'), storeUrlTags[storeUrlTags.length - 1]); //*************google網站*************
-            }
+                let googleUrlText = await page.evaluate(element => element.innerText, storeUrlTags[storeUrlTags.length - 1]);
+                if (googleUrlText === "在「Google 地圖」中檢視") {
 
-            // open new page to scrap images
-            //console.log(store.googleUrl)
-            let page1 = await browser.newPage();
-            await page1.goto(store.googleUrl);
-            await page1.waitForXPath('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
-            let photoBtn = await page1.$x('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
-            await photoBtn[0].click();
-            await page1.waitForSelector('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
-            let photoLinks = await page1.$$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
-            for (let i = 0; i < 5; i++) {
-                let googleLink = await page1.evaluate(element => element.getAttribute('style'), photoLinks[i]); //*************google照片*************
-                store.googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
+                    let googleUrl = await page.evaluate(element => element.getAttribute('href'), storeUrlTags[storeUrlTags.length - 1]); //*************google網站*************
+
+                    //save target of original page to know that this was the opener:
+                    const pageTarget = page.target();
+
+                    await cursor.click(storeUrlTags[storeUrlTags.length - 1])
+                    const newTarget = await browser.waitForTarget(target => target.opener() === pageTarget);
+                    const newPage = await newTarget.page();
+                    const nerCursor = createCursor(newPage)
+                    await newPage.waitForXPath('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
+                    let photoBtn = await newPage.$(' #pane > div > div.widget-pane-content > div > div > div.F8J9Nb-LfntMc-header-HiaYvf > div.section-hero-header-image-hero-container > button')
+
+                    await nerCursor.click(photoBtn)
+                    await newPage.waitForSelector('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
+                    let photoLinks = await newPage.$$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
+                    for (let i = 0; i < 5; i++) {
+                        let googleLink = await newPage.evaluate(element => element.getAttribute('style'), photoLinks[i]); //*************google照片*************
+                        store.googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
+                    }
+                    await newPage.close()
+                    await page.waitForTimeout(1000);
+
+                }
             }
-            await page1.close()
-            await page.waitForTimeout(1000);
         }
 
         let url = page.url()
@@ -160,10 +173,8 @@ module.exports = async (browser, page, storeLink, regionName) => {
         //上一頁
         await page.waitForSelector('#featurecardPanel > div > div >div:nth-child(3) > div:nth-child(1) > div:nth-child(1)');
         let backBtn = await page.$('#featurecardPanel > div > div >div:nth-child(3) > div:nth-child(1) > div:nth-child(1)');
-        await backBtn.click();
-        await page.waitForTimeout(process.env.DELAY_TIME)
-    } catch
-        (error) {
+        await cursor.click(backBtn);
+    } catch (error) {
         console.log(error)
     }
 }

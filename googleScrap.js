@@ -5,6 +5,8 @@ puppeteer.use(StealthPlugin());
 
 const mongoose = require('mongoose');
 const storeScrap = require('./storeScrap');
+const {createCursor} = require("ghost-cursor");
+
 
 const go = async (proxy) => {
     try {
@@ -58,7 +60,7 @@ const go = async (proxy) => {
         },
     }
 
-    const browser = await puppeteer.launch(headless)
+    const browser = await puppeteer.launch(normal)
 
     try {
 //==========================================================================================
@@ -81,28 +83,25 @@ const go = async (proxy) => {
 
         await page.goto(process.env.MAP_URL);
         await page.waitForXPath('//*[@id="legendPanel"]/div/div/div[2]/div/div/div[2]')
+        const cursor = createCursor(page)
 
         //還有更多先點開
         const moreBtns = await page.$$('#legendPanel > div > div > div > div > div > div> div > div > div> div> span');
         for (moreBtn of moreBtns) {
-            await moreBtn.click()
+            await cursor.click(moreBtn)
         }
         const regions = await page.$$('#legendPanel > div > div > div > div > div > div > div > div > div.HzV7m-pbTTYe-r4nke');
 
 
-        let regionName = await page.evaluate(element => element.innerText, regions[1]); //*************地區*************
-        const stores = await page.$$(`#legendPanel > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(1) > div >div:nth-child(3) > div.pbTTYe-ibnC6b-d6wfac`);
-        await storeScrap(browser, page, stores[0], regionName);
+        for (let i = 0; i < regions.length - 1; i++) {
+            let regionName = await page.evaluate(element => element.innerText, regions[i]); //*************地區*************
+            const stores = await page.$$(`#legendPanel > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(${i + 1}) > div >div:nth-child(3) > div.pbTTYe-ibnC6b-d6wfac`);
 
-        // for (let i = 0; i < regions.length - 1; i++) {
-        //     let regionName = await page.evaluate(element => element.innerText, regions[i]); //*************地區*************
-        //     const stores = await page.$$(`#legendPanel > div > div > div:nth-child(2) > div > div > div:nth-child(2) > div:nth-child(${i + 1}) > div >div:nth-child(3) > div.pbTTYe-ibnC6b-d6wfac`);
-        //
-        //     for (let j = 0; j < stores.length - 1; j++) {
-        //         console.log(`${regionName}區域第${j}間店`)
-        //         await storeScrap(page, stores[j], regionName);
-        //     }
-        // }
+            for (let j = 0; j < stores.length - 1; j++) {
+                console.log(`${regionName}區域第${j}間店`)
+                await storeScrap(browser, page, cursor, stores[j], regionName);
+            }
+        }
 //==========================================================================================
 //check for run time end
 //==========================================================================================

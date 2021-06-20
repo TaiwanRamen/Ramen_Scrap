@@ -5,10 +5,11 @@ if (!isProduction) {
 const express = require('express'),
     googleScrap = require('./googleScrap'),
     getProxy = require('./getProxys'),
-    axios = require("axios");
+    axios = require("axios"),
+    storeInfo = require('./storeInfo');
 
 const
-app = express();
+    app = express();
 
 app.get('/scrap', async (req, res) => {
 
@@ -38,6 +39,21 @@ app.get('/scrap', async (req, res) => {
                 message: "success"
             })
         }
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: error
+        })
+    }
+});
+
+
+app.get('/storeInfo', async (req, res) => {
+    try {
+        storeInfo();
+        res.status(200).json({
+            message: "success"
+        })
     } catch (error) {
         console.log(error)
         res.status(500).json({
