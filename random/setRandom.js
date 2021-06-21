@@ -7,7 +7,7 @@ const saveRandom = async (page) => {
         const randomReferer = referers[Math.floor(Math.random() * referers.length)];
         const randomAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
         await page.setUserAgent(randomAgent);
-        await page.setDefaultTimeout(30 * 1000);
+        await page.setDefaultTimeout(10 * 1000);
         await page.setExtraHTTPHeaders({
             'referer': randomReferer,
         });
