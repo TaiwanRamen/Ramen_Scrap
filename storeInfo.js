@@ -151,15 +151,20 @@ module.exports = async () => {
         } catch (error) {
             throw new Error('connection broke');
         }
-        const allStores = await Store.find().sort('_id');
+        const allStores = await Store.find({}, {
+            _id: 1,
+            googleImages: 1,
+            name: 1
+        }).sort('_id');
+        console.log(allStores)
         for (let i = 0; i < allStores.length; i++) {
             if (allStores[i].googleImages === null){
                 await scrap(allStores[i])
-                fs.appendFileSync('done.json', `{
-                'storeId': '${allStores[i]._id}',
-                'number': ${i}
-            },
-            `)
+            //     fs.appendFileSync('done.json', `{
+            //     'storeId': '${allStores[i]._id}',
+            //     'number': ${i}
+            // },
+            // `)
             }
         }
     } catch (err) {
