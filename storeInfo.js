@@ -51,7 +51,7 @@ const scrap = async (store) => {
             height
         },
     }
-    const browser = await puppeteer.launch(normal);
+    const browser = await puppeteer.launch(headless);
     const context = browser.defaultBrowserContext();
     await context.overridePermissions("https://www.google.com/maps", ["geolocation", "notifications"]);
     let page = await browser.newPage();
@@ -84,11 +84,12 @@ const scrap = async (store) => {
         await cursor.click(searchBox)
 
         let name = store.name.split('(')[0]
-
+        console.log(name)
         await page.keyboard.type(name, {delay: Math.floor(Math.random() * 300)});
         await searchBox.click()
         await page.keyboard.press('Enter');
 
+        //如果有多個選項，選第一個
         await page.waitForTimeout(1000)
         if ((await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox')) !== null) {
             // let theFirst = await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout.section-scrollbox > div:nth-child(3) > div > a')
@@ -98,22 +99,35 @@ const scrap = async (store) => {
             await theFirst[0].click();
         }
 
-
-        await page.waitForXPath('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
-        let photoBtn = await page.$x('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
-        await photoBtn[0].click()
-        await page.waitForSelector('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
-        let photoLinks = await page.$$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
-
-
-        let googleImages = []
-
-        for (let i = 0; i < 5; i++) {
-            await photoLinks[i].click()
-            await page.waitForTimeout(100)
-            let googleLink = await page.evaluate(element => element.getAttribute('style'), photoLinks[i]); //*************google照片*************
-            googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
+        //點選營業時間
+        await page.waitForSelector('div.OqCZI.gm2-body-2.WVXvdc > div.n2H0ue-RWgCYc.hH0dDd.PcZHt-KW5YQd')
+        let openBtn = await page.$('div.OqCZI.gm2-body-2.WVXvdc > div.n2H0ue-RWgCYc.hH0dDd.PcZHt-KW5YQd');
+        if (openBtn !== null) {
+            await cursor.click(openBtn);
+            await page.waitForSelector('div.OqCZI.gm2-body-2.WVXvdc.hE0Yed-dropdown-open > div.LJKBpe-open-R86cEd-haAclf.t39EBf-Tydcue')
+            let openTimeDiv = await page.$('div.OqCZI.gm2-body-2.WVXvdc.hE0Yed-dropdown-open > div.LJKBpe-open-R86cEd-haAclf.t39EBf-Tydcue');
+            let openTimeText = await page.evaluate(element => element.getAttribute('aria-label'), openTimeDiv); //*************營業時間*************
+            console.log(openTimeText)
+            store.openPeriodText = openTimeText;
         }
+
+        //點選照片按鈕，開啟照片
+        //if statement之後要刪
+        if (store.googleImages === null || store.googleImages === undefined || store.googleImages.length === 0) {
+            await page.waitForXPath('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
+            let photoBtn = await page.$x('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
+            await photoBtn[0].click()
+            await page.waitForSelector('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
+            let photoLinks = await page.$$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
+
+            let googleImages = []
+            for (let i = 0; i < 5; i++) {
+                await photoLinks[i].click()
+                let googleLink = await page.evaluate(element => element.getAttribute('style'), photoLinks[i]); //*************google照片*************
+                googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
+            }
+        }
+
 
         store.googleImages = googleImages;
         console.log(googleImages)
@@ -162,8 +176,6 @@ const scrap = async (store) => {
 // }
 
 
-
-
 //do it randomly
 module.exports = async () => {
     try {
@@ -187,13 +199,13 @@ module.exports = async () => {
 
         let allStoreLength = allStores.length
 
-        while (mySet.size < allStores.length){
-            let index = Math.floor(Math.random() * allStoreLength);
-            if (!mySet.has(index)){
-                await scrap(allStores[index])
-                mySet.add(index)
-            }
+        // while (mySet.size < allStores.length){
+        let index = Math.floor(Math.random() * allStoreLength);
+        if (!mySet.has(index)) {
+            await scrap(allStores[index])
+            mySet.add(index)
         }
+        // }
         console.log("end")
 
     } catch (err) {

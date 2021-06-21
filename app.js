@@ -4,13 +4,24 @@ if (!isProduction) {
 }
 const express = require('express'),
     googleScrap = require('./googleScrap'),
-    getProxy = require('./getProxys'),
     axios = require("axios"),
     storeInfo = require('./storeInfo');
 const Store = require('./models/store');
 const mongoose = require('mongoose');
 
 const app = express();
+try {
+    mongoose.connect(process.env.DATABASE_URL_RS, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false,
+        useCreateIndex: true,
+        replicaSet: "rs0"
+    });
+    console.log('MongoDB Connected...');
+} catch (error) {
+    throw new Error('connection broke');
+}
 
 app.get('/scrap', async (req, res) => {
 
@@ -82,18 +93,6 @@ app.get('/serverIp', async (req, res) => {
 app.get('/address', async (req, res) => {
 
     try {
-        try {
-            await mongoose.connect(process.env.DATABASE_URL_RS, {
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
-                useFindAndModify: false,
-                useCreateIndex: true,
-                replicaSet: "rs0"
-            });
-            console.log('MongoDB Connected...');
-        } catch (error) {
-            throw new Error('connection broke');
-        }
         const allStores = await Store.find({}, {
             _id: 1,
             name: 1,
