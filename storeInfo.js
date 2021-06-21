@@ -136,7 +136,39 @@ const scrap = async (store) => {
         await browser.close();
     }
 }
+//
+// module.exports = async () => {
+//     try {
+//         try {
+//             await mongoose.connect(process.env.DATABASE_URL_RS, {
+//                 useNewUrlParser: true,
+//                 useUnifiedTopology: true,
+//                 useFindAndModify: false,
+//                 useCreateIndex: true,
+//                 replicaSet: "rs0"
+//             });
+//             console.log('MongoDB Connected...');
+//         } catch (error) {
+//             throw new Error('connection broke');
+//         }
+//         const allStores = await Store.find({googleImages: null}, {
+//             _id: 1,
+//             name: 1
+//         }).sort('_id');
+//         console.log(allStores)
+//         for (let i = 0; i < allStores.length; i++) {
+//             await scrap(allStores[i])
+//
+//         }
+//     } catch (err) {
+//         console.log(err)
+//     }
+// }
 
+
+
+
+//do it randomly
 module.exports = async () => {
     try {
         try {
@@ -151,15 +183,25 @@ module.exports = async () => {
         } catch (error) {
             throw new Error('connection broke');
         }
+        console.log("thisssss")
+
         const allStores = await Store.find({googleImages: null}, {
             _id: 1,
             name: 1
-        }).sort('_id');
-        console.log(allStores)
-        for (let i = 0; i < allStores.length; i++) {
-            await scrap(allStores[i])
+        });
+        let mySet = new Set([]);
 
+        let allStoreLength = allStores.length
+
+        while (mySet.size < allStores.length){
+            let index = Math.floor(Math.random() * allStoreLength);
+            if (!mySet.has(index)){
+                await scrap(allStores[index])
+                mySet.add(index)
+            }
         }
+        console.log("end")
+
     } catch (err) {
         console.log(err)
     }

@@ -61,6 +61,7 @@ app.get('/storeInfo', async (req, res) => {
         })
     }
 });
+
 app.get('/serverIp', async (req, res) => {
 
     try {
