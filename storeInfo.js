@@ -59,35 +59,9 @@ const scrap = async (store) => {
     await setRandom(page);
 
     try {
-        await page.goto('https://www.google.com.tw/maps');
-        await page.waitForTimeout(3000)
-        console.log(await page.$('ml-promotion-heading-id') !== null)
-        console.log(await page.$('#app > div.mapsLiteJsStart__container.mapsLiteJsStart__ml-start-container') !== null)
-        let reloadTimes = 0
-        while (await page.$('ml-promotion-heading-id') !== null ||
-        await page.$('#app > div.mapsLiteJsStart__container.mapsLiteJsStart__ml-start-container') !== null || reloadTimes > 10) {
-            await page.close()
-            page = await browser.newPage();
-            await page.goto('https://www.google.com.tw/maps');
-            await page.waitForTimeout(1000)
-            reloadTimes++
-        }
+        let name = store.name.replace(/\(\S+\)/, "")
+        await page.goto(`https://www.google.com.tw/maps/search/${name}`);
 
-
-        await page.waitForSelector('#searchboxinput')
-        const from = {x: Math.floor(Math.random() * width), y: Math.floor(Math.random() * width)}
-        const to = {x: Math.floor(Math.random() * width), y: Math.floor(Math.random() * height)}
-        await path(from, to)
-
-        let searchBox = await page.$('#searchboxinput');
-        const cursor = createCursor(page)
-        await cursor.click(searchBox)
-
-        let name = store.name.split('(')[0]
-
-        await page.keyboard.type(name, {delay: Math.floor(Math.random() * 1000)});
-        await searchBox.click()
-        await page.keyboard.press('Enter');
 
         await page.waitForTimeout(1000)
         if ((await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox')) !== null) {
@@ -100,8 +74,6 @@ const scrap = async (store) => {
 
 
         await page.waitForXPath('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
-        await page.waitForTimeout(1000)
-
         let photoBtn = await page.$x('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
         await photoBtn[0].click()
         await page.waitForSelector('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
@@ -114,7 +86,7 @@ const scrap = async (store) => {
 
         for (let i = 0; i < 5; i++) {
             await cursor.click(photoLinks[i])
-            await page.waitForTimeout(300)
+            await page.waitForTimeout(100)
             let googleLink = await page.evaluate(element => element.getAttribute('style'), photoLinks[i]); //*************google照片*************
             googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
         }
@@ -127,7 +99,7 @@ const scrap = async (store) => {
         );
 
         await page.close()
-        await page.waitForTimeout(600);
+        await page.waitForTimeout(500);
 
     } catch (error) {
         console.log('error in fb_scrap.js')
@@ -183,8 +155,6 @@ module.exports = async () => {
         } catch (error) {
             throw new Error('connection broke');
         }
-        console.log("thisssss")
-
         const allStores = await Store.find({googleImages: null}, {
             _id: 1,
             name: 1

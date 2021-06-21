@@ -7,9 +7,10 @@ const express = require('express'),
     getProxy = require('./getProxys'),
     axios = require("axios"),
     storeInfo = require('./storeInfo');
+const Store = require('./models/store');
+const mongoose = require('mongoose');
 
-const
-    app = express();
+const app = express();
 
 app.get('/scrap', async (req, res) => {
 
@@ -78,6 +79,60 @@ app.get('/serverIp', async (req, res) => {
     }
 })
 
+app.get('/address', async (req, res) => {
+
+    try {
+        try {
+            await mongoose.connect(process.env.DATABASE_URL_RS, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+                useFindAndModify: false,
+                useCreateIndex: true,
+                replicaSet: "rs0"
+            });
+            console.log('MongoDB Connected...');
+        } catch (error) {
+            throw new Error('connection broke');
+        }
+        const allStores = await Store.find({}, {
+            _id: 1,
+            name: 1,
+            address: 1
+        });
+        res.status(200).json({
+            message: "success"
+        })
+        for (let store of allStores) {
+            try {
+                const response = await axios.get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', {
+                    params: {
+                        input: store.address || store.name.replace(/\(\S+\)/, ""),
+                        inputtype: "textquery",
+                        fields: "formatted_address",
+                        language: "zh-TW",
+                        key: process.env.GOOGLE_API_KEY
+                    }
+                });
+                console.log(store.name)
+                console.log(response.data.candidates[0])
+
+                store.address = response.data.candidates[0].formatted_address;
+
+                await Store.findOneAndUpdate(
+                    {_id: store._id},
+                    store
+                );
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } catch (e) {
+                console.log(e)
+            }
+        }
+
+    } catch (error) {
+        console.log(error)
+    }
+})
+
 app.get('/:else', (req, res) => {
     res.send("No such pass exist.");
 })
@@ -86,3 +141,6 @@ app.get('/:else', (req, res) => {
 const PORT = process.env.PORT;
 
 app.listen(PORT, console.log(`Server started on port ${PORT}`));
+
+
+//337台灣桃園市大園區???
