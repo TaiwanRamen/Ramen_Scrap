@@ -199,13 +199,13 @@ module.exports = async () => {
 
         let allStoreLength = allStores.length
 
-        // while (mySet.size < allStores.length){
+        while (mySet.size < allStores.length){
         let index = Math.floor(Math.random() * allStoreLength);
         if (!mySet.has(index)) {
             await scrap(allStores[index])
             mySet.add(index)
         }
-        // }
+        }
         console.log("end")
 
     } catch (err) {
