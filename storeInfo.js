@@ -153,13 +153,14 @@ module.exports = async () => {
         }
         const allStores = await Store.find().sort('_id');
         for (let i = 0; i < allStores.length; i++) {
-            await scrap(allStores[i])
-            fs.appendFileSync('done.json', `{
+            if (allStores[i].googleImages === null){
+                await scrap(allStores[i])
+                fs.appendFileSync('done.json', `{
                 'storeId': '${allStores[i]._id}',
                 'number': ${i}
             },
             `)
-
+            }
         }
     } catch (err) {
         console.log(err)
