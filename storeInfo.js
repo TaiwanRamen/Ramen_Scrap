@@ -89,7 +89,7 @@ const scrap = async (store) => {
         await searchBox.click()
         await page.keyboard.press('Enter');
 
-        await page.waitForTimeout(2000)
+        await page.waitForTimeout(1000)
         if ((await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox')) !== null) {
             // let theFirst = await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout.section-scrollbox > div:nth-child(3) > div > a')
             // await theFirst.click();
@@ -114,7 +114,7 @@ const scrap = async (store) => {
 
         for (let i = 0; i < 5; i++) {
             await cursor.click(photoLinks[i])
-            await page.waitForTimeout(500)
+            await page.waitForTimeout(300)
             let googleLink = await page.evaluate(element => element.getAttribute('style'), photoLinks[i]); //*************google照片*************
             googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
         }
@@ -127,7 +127,7 @@ const scrap = async (store) => {
         );
 
         await page.close()
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(600);
 
     } catch (error) {
         console.log('error in fb_scrap.js')
@@ -151,21 +151,14 @@ module.exports = async () => {
         } catch (error) {
             throw new Error('connection broke');
         }
-        const allStores = await Store.find({}, {
+        const allStores = await Store.find({googleImages: null}, {
             _id: 1,
-            googleImages: 1,
             name: 1
         }).sort('_id');
         console.log(allStores)
         for (let i = 0; i < allStores.length; i++) {
-            if (allStores[i].googleImages === null){
-                await scrap(allStores[i])
-            //     fs.appendFileSync('done.json', `{
-            //     'storeId': '${allStores[i]._id}',
-            //     'number': ${i}
-            // },
-            // `)
-            }
+            await scrap(allStores[i])
+
         }
     } catch (err) {
         console.log(err)
