@@ -51,7 +51,7 @@ const scrap = async (store) => {
             height
         },
     }
-    const browser = await puppeteer.launch(normal);
+    const browser = await puppeteer.launch(headless);
     const context = browser.defaultBrowserContext();
     await context.overridePermissions("https://www.google.com/maps", ["geolocation", "notifications"]);
     let page = await browser.newPage();
@@ -60,7 +60,7 @@ const scrap = async (store) => {
 
     try {
         await page.goto('https://www.google.com.tw/maps');
-        await page.waitForTimeout(3000)
+        await page.waitForTimeout(2000)
         console.log(await page.$('ml-promotion-heading-id') !== null)
         console.log(await page.$('#app > div.mapsLiteJsStart__container.mapsLiteJsStart__ml-start-container') !== null)
         let reloadTimes = 0
@@ -91,13 +91,13 @@ const scrap = async (store) => {
 
         //如果有多個選項，選第一個
         await page.waitForTimeout(1000)
-        // if ((await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox')) !== null) {
-        //     // let theFirst = await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout.section-scrollbox > div:nth-child(3) > div > a')
-        //     // await theFirst.click();
-        //
-        //     let theFirst = await page.$x('//*[@id="pane"]/div/div[1]/div/div/div[4]/div[1]/div[3]/div/a')
-        //     await theFirst[0].click();
-        // }
+        if ((await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox')) !== null) {
+            // let theFirst = await page.$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout.section-scrollbox > div:nth-child(3) > div > a')
+            // await theFirst.click();
+
+            let theFirst = await page.$x('//*[@id="pane"]/div/div[1]/div/div/div[4]/div[1]/div[3]/div/a')
+            await theFirst[0].click();
+        }
 
         //點選營業時間
         await page.waitForSelector('div.OqCZI.gm2-body-2.WVXvdc > div.n2H0ue-RWgCYc.hH0dDd.PcZHt-KW5YQd')
@@ -111,24 +111,6 @@ const scrap = async (store) => {
             store.openPeriodText = openTimeText;
         }
 
-        //點選照片按鈕，開啟照片
-        //if statement之後要刪
-        if (store.googleImages === null || store.googleImages === undefined || store.googleImages.length === 0) {
-            await page.waitForXPath('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
-            let photoBtn = await page.$x('//*[@id="pane"]/div/div[1]/div/div/div[1]/div[1]/button')
-            await photoBtn[0].click()
-            await page.waitForSelector('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
-            let photoLinks = await page.$$('#pane > div > div.widget-pane-content > div > div > div.section-layout.section-scrollbox > div.section-layout > div >div >a> div.gallery-image-low-res')
-
-            let googleImages = []
-            for (let i = 0; i < 5; i++) {
-                await photoLinks[i].click()
-                let googleLink = await page.evaluate(element => element.getAttribute('style'), photoLinks[i]); //*************google照片*************
-                googleImages.push(googleLink.split(`url("`)[1].split(`=w`)[0])  //******"https://lh5.googleusercontent.com/p/AF1QipOSFym4i5u5dX1d3MqhoN9r9IWgPba6s35DVjM"*****
-            }
-            store.googleImages = googleImages;
-            console.log(googleImages)
-        }
 
         await Store.findOneAndUpdate(
             {_id: store._id},
@@ -145,52 +127,11 @@ const scrap = async (store) => {
         await browser.close();
     }
 }
-//
-// module.exports = async () => {
-//     try {
-//         try {
-//             await mongoose.connect(process.env.DATABASE_URL_RS, {
-//                 useNewUrlParser: true,
-//                 useUnifiedTopology: true,
-//                 useFindAndModify: false,
-//                 useCreateIndex: true,
-//                 replicaSet: "rs0"
-//             });
-//             console.log('MongoDB Connected...');
-//         } catch (error) {
-//             throw new Error('connection broke');
-//         }
-//         const allStores = await Store.find({googleImages: null}, {
-//             _id: 1,
-//             name: 1
-//         }).sort('_id');
-//         console.log(allStores)
-//         for (let i = 0; i < allStores.length; i++) {
-//             await scrap(allStores[i])
-//
-//         }
-//     } catch (err) {
-//         console.log(err)
-//     }
-// }
-
 
 //do it randomly
 module.exports = async () => {
     try {
-        try {
-            await mongoose.connect(process.env.DATABASE_URL_RS, {
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
-                useFindAndModify: false,
-                useCreateIndex: true,
-                replicaSet: "rs0"
-            });
-            console.log('MongoDB Connected...');
-        } catch (error) {
-            throw new Error('connection broke');
-        }
-        const allStores = await Store.find({googleImages: null}, {
+        const allStores = await Store.find({openPeriodText: null}, {
             _id: 1,
             name: 1
         });
@@ -198,12 +139,12 @@ module.exports = async () => {
 
         let allStoreLength = allStores.length
 
-        while (mySet.size < allStores.length){
-        let index = Math.floor(Math.random() * allStoreLength);
-        if (!mySet.has(index)) {
-            await scrap(allStores[index])
-            mySet.add(index)
-        }
+        while (mySet.size < allStores.length) {
+            let index = Math.floor(Math.random() * allStoreLength);
+            if (!mySet.has(index)) {
+                await scrap(allStores[index])
+                mySet.add(index)
+            }
         }
         console.log("end")
 

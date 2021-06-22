@@ -8,6 +8,7 @@ const express = require('express'),
     storeInfo = require('./storeInfo');
 const Store = require('./models/store');
 const mongoose = require('mongoose');
+const openHour = require('./openHour')
 
 const app = express();
 try {
@@ -129,6 +130,22 @@ app.get('/address', async (req, res) => {
     } catch (error) {
         console.log(error)
     }
+})
+
+
+app.get('/openHour', async (req, res) => {
+    try {
+        openHour();
+        res.status(200).json({
+            message: "success"
+        })
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            message: error
+        })
+    }
+
 })
 
 
